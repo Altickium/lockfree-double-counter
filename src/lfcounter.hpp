@@ -2,11 +2,11 @@
 
 struct LFCounter {
     //int * firstCounter, secondCounter;
-    std::atomic<unsigned int>* memoryOne, *memoryTwo;
+    std::atomic_uint32_t *memoryOne, *memoryTwo;
 
-    std::atomic<bool> isOneMaxed = std::atomic_bool(false);
+    std::atomic_bool isOneMaxed = std::atomic_bool(false);
 
-    LFCounter(std::atomic<unsigned int>& mem1, std::atomic<unsigned int>& mem2) {
+    LFCounter(std::atomic_uint32_t & mem1, std::atomic_uint32_t & mem2) {
         memoryOne = &mem1;
         memoryTwo = &mem2;
     }

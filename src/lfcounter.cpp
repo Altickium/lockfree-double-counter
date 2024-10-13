@@ -4,7 +4,7 @@
 
 unsigned long long LFCounter::get() {
     unsigned int first = memoryOne->load();
-    while (first != UINT32_MAX && memoryOne->compare_exchange_weak(first, first + 1,std::memory_order_release, std::memory_order_relaxed)) {
+    while (first != UINT32_MAX && !memoryOne->compare_exchange_strong(first, first + 1)) {
 
     };
     
@@ -14,13 +14,13 @@ unsigned long long LFCounter::get() {
     
     //First bool change
     bool isFirstMaxed = isOneMaxed.load();
-    while (isOneMaxed.compare_exchange_weak(isFirstMaxed, true, std::memory_order_release, std::memory_order_relaxed));
+    while (!isOneMaxed.compare_exchange_strong(isFirstMaxed, true));
     if (!isFirstMaxed) {
         return first;
     }
 
     unsigned int second = memoryTwo->load();
-    while (second != UINT32_MAX && memoryOne->compare_exchange_weak(second, second + 1,std::memory_order_release, std::memory_order_relaxed)) {
+    while (second != UINT32_MAX && !memoryOne->compare_exchange_strong(second, second + 1)) {
 
     };
 

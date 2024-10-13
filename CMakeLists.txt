@@ -11,4 +11,4 @@ else()
 endif()
 
 # Uncomment to work on task 1
-add_executable(main_task main.cpp)
+add_executable(main_task src/lfcounter.cpp src/main.cpp)

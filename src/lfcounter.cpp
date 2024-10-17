@@ -2,28 +2,27 @@
 
 #include <atomic>
 
+unsigned long long convertInts(unsigned int first, unsigned int second) {
+    unsigned long long firstPart = first;
+    return (firstPart << 32) + second;
+}
+
 unsigned long long LFCounter::get() {
-    unsigned int first = memoryOne->load();
-    while (first != UINT32_MAX && !memoryOne->compare_exchange_strong(first, first + 1)) {
+    unsigned int second = memoryTwo->load(), first = 0;
+    while (second != UINT32_MAX) {
+        first = memoryOne->load();
+        while (first != UINT32_MAX && !memoryOne->compare_exchange_strong(first, first + 1)) {
+            second = memoryTwo -> load();
+        };
 
+        if (first == UINT32_MAX && memoryTwo->compare_exchange_strong(second, second + 1)) {
+            memoryOne->store(0);
+            return convertInts(second, first);
+        } else if (first != UINT32_MAX) {
+            return convertInts(second, first);
+        }
     };
-    
-    if (first != UINT32_MAX) {
-        return first;
-    }
-    
-    //First bool change
-    bool isFirstMaxed = isOneMaxed.load();
-    while (!isOneMaxed.compare_exchange_strong(isFirstMaxed, true));
-    if (!isFirstMaxed) {
-        return first;
-    }
-
-    unsigned int second = memoryTwo->load();
-    while (second != UINT32_MAX && !memoryOne->compare_exchange_strong(second, second + 1)) {
-
-    };
-
-    long long convertedFirst = first;
-    return (unsigned long long) (convertedFirst << 32) + second;
+    first = memoryOne->load();
+    while (first != UINT32_MAX && !memoryOne->compare_exchange_strong(first, first + 1));
+    return convertInts(second, first);
 }

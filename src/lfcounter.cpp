@@ -15,9 +15,11 @@ unsigned long long LFCounter::get() {
             second = memoryTwo -> load();
         };
 
-        if (first == UINT32_MAX && memoryTwo->compare_exchange_strong(second, second + 1)) {
+        if (first == UINT32_MAX) {
             memoryOne->store(0);
-            return convertInts(second, first);
+            if (memoryTwo->compare_exchange_strong(second, second + 1)) {
+                return convertInts(second, first);
+            }
         } else if (first != UINT32_MAX) {
             return convertInts(second, first);
         }

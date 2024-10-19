@@ -21,6 +21,7 @@ unsigned long long LFCounter::get() {
             }
             memoryOne->compare_exchange_strong(first, 0);
         } else if (first != UINT32_MAX) {
+            while(!memoryTwo->compare_exchange_strong(second, second));
             return convertInts(second, first);
         }
     };

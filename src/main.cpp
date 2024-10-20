@@ -29,7 +29,7 @@ int random_value()
  
 int main()
 {   
-    std::atomic_uint32_t mem1, mem2;
+    std::atomic_uint32_t mem1(0), mem2(0);
     LFCounter lf(mem1, mem2);
     bool* checker = new bool[global_max_count]{false};
     auto work = [&lf, &checker]()

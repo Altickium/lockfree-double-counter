@@ -1,6 +1,10 @@
 #include "lfcounter.hpp"
 
 #include <atomic>
+#include <thread>
+#include <cassert>
+
+const unsigned long MAX_THREADS = 256;
 
 unsigned long long convertInts(unsigned int first, unsigned int second) {
     unsigned long long firstPart = first;
@@ -8,23 +12,23 @@ unsigned long long convertInts(unsigned int first, unsigned int second) {
 }
 
 unsigned long long LFCounter::get() {
-    unsigned int second = memoryTwo->load(), first = memoryOne->load();
+    unsigned int second = -1, first = -1;
     while (second != UINT32_MAX) {
-        first = memoryOne->load();
+        second = memoryTwo -> load(), first = memoryOne->load();
         while (first != UINT32_MAX && !memoryOne->compare_exchange_strong(first, first + 1)) {
-            second = memoryTwo -> load();
-        };
-
+        }
         if (first == UINT32_MAX) {
-            if (memoryTwo->compare_exchange_strong(second, second + 1)) {
+            size_t tid = std::hash<std::thread::id>{}(std::this_thread::get_id());
+            if (tid % MAX_THREADS == 0) {
+                memoryTwo->compare_exchange_strong(second, second + 1);
+                memoryOne->compare_exchange_strong(first, 0);
                 return convertInts(second, first);
             }
-            memoryOne->compare_exchange_strong(first, 0);
-        } else if (first != UINT32_MAX) {
-            while(!memoryTwo->compare_exchange_strong(second, second));
+        } else {
             return convertInts(second, first);
         }
-    };
+    }
+    second = memoryTwo->load();
     first = memoryOne->load();
     while (first != UINT32_MAX && !memoryOne->compare_exchange_strong(first, first + 1));
     return convertInts(second, first);

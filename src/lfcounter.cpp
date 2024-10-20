@@ -22,8 +22,10 @@ unsigned long long LFCounter::get() {
             if (tid % MAX_THREADS == 0) {
                 memoryTwo->compare_exchange_strong(second, second + 1);
                 memoryOne->compare_exchange_strong(first, 0);
+                memoryOne->notify_all();
                 return convertInts(second, first);
             }
+            memoryOne->wait(UINT32_MAX);
         } else {
             return convertInts(second, first);
         }

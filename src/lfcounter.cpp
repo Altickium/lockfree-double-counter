@@ -18,15 +18,14 @@ unsigned long long LFCounter::get() {
         while (first != UINT32_MAX && !memoryOne->compare_exchange_strong(first, first + 1)) {
         }
         if (first == UINT32_MAX) {
-            size_t tid = std::hash<std::thread::id>{}(std::this_thread::get_id());
-            if (tid % MAX_THREADS == 0) {
-                memoryTwo->compare_exchange_strong(second, second + 1);
+            //size_t tid = std::hash<std::thread::id>{}(std::this_thread::get_id());
+            //if (tid % MAX_THREADS == 0) {
+            if (memoryTwo->compare_exchange_strong(second, second + 1)) {
                 memoryOne->compare_exchange_strong(first, 0);
-                memoryOne->notify_all();
-                return convertInts(second, first);
+                return convertInts(second, UINT32_MAX);
             }
-            memoryOne->wait(UINT32_MAX);
-        } else {
+            memoryOne->compare_exchange_strong(first, 0);
+        } else if (memoryTwo -> compare_exchange_strong(second, second)) {
             return convertInts(second, first);
         }
     }

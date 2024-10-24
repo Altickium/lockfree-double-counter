@@ -12,25 +12,21 @@ unsigned long long convertInts(unsigned int first, unsigned int second) {
 }
 
 unsigned long long LFCounter::get() {
-    unsigned int second = -1, first = -1;
-    while (second != UINT32_MAX) {
-        second = memoryTwo -> load(), first = memoryOne->load();
-        while (first != UINT32_MAX && !memoryOne->compare_exchange_strong(first, first + 1)) {
-        }
+    unsigned int second = memoryTwo -> load(), first = first = memoryOne->load();
+    while (true) {
+        unsigned int nfirst = first + 1, nsecond = second;
         if (first == UINT32_MAX) {
-            //size_t tid = std::hash<std::thread::id>{}(std::this_thread::get_id());
-            //if (tid % MAX_THREADS == 0) {
-            if (memoryTwo->compare_exchange_strong(second, second + 1)) {
-                memoryOne->compare_exchange_strong(first, 0);
-                return convertInts(second, UINT32_MAX);
-            }
-            memoryOne->compare_exchange_strong(first, 0);
-        } else if (memoryTwo -> compare_exchange_strong(second, second)) {
-            return convertInts(second, first);
+            nfirst = 0;
+            nsecond = second + 1;
+        }
+        if (!memoryTwo->compare_exchange_strong(second, nsecond)) {
+            continue;
+        }
+        if (!memoryOne->compare_exchange_strong(first, nfirst)) {
+            continue;
+        }
+        if (memoryTwo->compare_exchange_strong(second, second)) {
+            return convertInts(nsecond, nfirst);
         }
     }
-    second = memoryTwo->load();
-    first = memoryOne->load();
-    while (first != UINT32_MAX && !memoryOne->compare_exchange_strong(first, first + 1));
-    return convertInts(second, first);
 }

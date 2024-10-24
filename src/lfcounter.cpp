@@ -12,7 +12,7 @@ unsigned long long convertInts(unsigned int first, unsigned int second) {
 }
 
 unsigned long long LFCounter::get() {
-    unsigned int second = memoryTwo -> load(), first = first = memoryOne->load();
+    unsigned int second = memoryTwo -> load(), first = memoryOne->load();
     while (true) {
         unsigned int nfirst = first + 1, nsecond = second;
         if (first == UINT32_MAX) {

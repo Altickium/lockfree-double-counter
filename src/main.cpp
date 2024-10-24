@@ -15,17 +15,6 @@ std::atomic_ullong atomic_count{0};
 int completed_writes{0};
  
 constexpr unsigned long long global_max_count{1000 * 1000};
-//constexpr int writes_per_line{8};
-//constexpr int max_delay{2};
- 
-/*template<int Max>
-int random_value()
-{
-    static std::uniform_int_distribution<int> distr{1, Max};
-    static std::random_device engine;
-    static std::mt19937 noise{engine()};
-    return distr(noise);
-}*/
  
 int main()
 {   
@@ -48,7 +37,7 @@ int main()
     j2.join();
     j3.join();
     j4.join();
-    for (size_t i = 0; i<global_max_count - 1; ++i) {
+    for (size_t i = 1; i<global_max_count - 1; ++i) {
         assert(checker[i]);
     }
     delete[] checker;

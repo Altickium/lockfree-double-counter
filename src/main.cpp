@@ -14,7 +14,7 @@ std::atomic_ullong atomic_count{0};
 
 int completed_writes{0};
  
-constexpr unsigned long long global_max_count{1000 * 1000};
+constexpr unsigned long long global_max_count{1000};
  
 int main()
 {   
@@ -25,6 +25,7 @@ int main()
     {
         for (size_t count{}; (count = ++atomic_count) < global_max_count;)
         {
+            std::this_thread::sleep_for(std::chrono::milliseconds(5));
             {
                 unsigned long long val = lf.get();
                 checker[val] = true; 

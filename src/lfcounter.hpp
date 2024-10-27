@@ -11,4 +11,6 @@ struct LFCounter {
     }
 
     unsigned long long get();
+
+    bool tryIncrement();
 };

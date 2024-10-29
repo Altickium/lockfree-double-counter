@@ -8,28 +8,39 @@ const unsigned long MAX_THREADS = 256;
 unsigned int MAIN_BYTES = 8388607;     // 2 ^ 23 - 1
 
 unsigned long long convertInts(unsigned int first, unsigned int second) {
-    unsigned long long firstPart = (first << 10) >> 10;
-    unsigned long long secondPart = (second << 10) >> 10;
+    unsigned long long firstPart = (first << 22) >> 22;
+    unsigned long long secondPart = second;
     return (firstPart << 32) + secondPart;
 }
 
 unsigned long long LFCounter::get() {
-    unsigned int second = (memoryTwo -> load() << 10) >> 10, first = (memoryOne->load() << 10) >> 10;
-    while (second != MAIN_BYTES) {
-        while (first == MAIN_BYTES) {
-            if (tryIncrement()) {
-                return convertInts(second, MAIN_BYTES);
-            }
-            first = (memoryOne->load() << 10) >> 10;
-        } 
-        second = memoryTwo -> load();
-        while (first != MAIN_BYTES && !memoryOne->compare_exchange_strong(first, first + 1)) { }
-        if (first != MAIN_BYTES) {
-            if (memoryTwo->load() == second) {
-                return convertInts(second, first);
+    unsigned int gen1 = (memoryTwo -> load() >> 20);
+    unsigned int second = (memoryTwo -> load() << 22) >> 22;
+    unsigned int gen3 = ((memoryTwo -> load() << 12) >> 22);
+    unsigned int first = memoryOne->load();
+    unsigned int gen4 = ((memoryTwo -> load() << 12) >> 22);
+    unsigned int gen2 = (memoryTwo -> load() >> 20);
+    do {
+        gen1 = (memoryTwo -> load() >> 20);
+        first = 1 + memoryOne->fetch_add(1);
+        if (first == 0) {
+            gen1++;
+            second += gen1 << 20;
+            if (memoryTwo->compare_exchange_strong(second, second + 1)) {
+                do {
+                    gen3 = ((memoryTwo -> load() << 12) >> 22);
+                    if (memoryOne->compare_exchange_strong(first, 0)) {
+                        gen3++;
+                        uint32_t flg = (gen1 << 22) + (gen3 << 10) + second + 1;
+                        memoryTwo->compare_exchange_strong(flg, flg);
+                    }
+                    gen4 = ((memoryTwo -> load() << 12) >> 22);
+                } while(gen3 != gen4);
             }
         }
-    }
+        gen2 = (memoryTwo -> load() >> 20);
+        gen4 = ((memoryTwo -> load() << 12) >> 22);
+    } while (gen1 != gen2 && gen3 != gen4);
     return convertInts(second, first);
 }
 

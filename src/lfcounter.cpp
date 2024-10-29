@@ -17,10 +17,12 @@ unsigned long long LFCounter::get() {
     unsigned int gen1 = (memoryTwo -> load() >> 20);
     unsigned int second = (memoryTwo -> load() << 22) >> 22;
     unsigned int gen3 = ((memoryTwo -> load() << 12) >> 22);
+    unsigned int gen33 = ((memoryTwo -> load() << 12) >> 22);
     unsigned int first = memoryOne->load();
     unsigned int gen4 = ((memoryTwo -> load() << 12) >> 22);
     unsigned int gen2 = (memoryTwo -> load() >> 20);
     do {
+        gen33 = ((memoryTwo -> load() << 12) >> 22);
         gen1 = (memoryTwo -> load() >> 20);
         first = 1 + memoryOne->fetch_add(1);
         if (first == 0) {
@@ -40,7 +42,7 @@ unsigned long long LFCounter::get() {
         }
         gen2 = (memoryTwo -> load() >> 20);
         gen4 = ((memoryTwo -> load() << 12) >> 22);
-    } while (gen1 != gen2 && gen3 != gen4);
+    } while (gen1 != gen2 && gen33 != gen4);
     return convertInts(second, first);
 }
 

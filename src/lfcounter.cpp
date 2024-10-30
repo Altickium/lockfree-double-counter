@@ -13,17 +13,17 @@ unsigned long long convertInts(unsigned int first, unsigned int second) {
 }
 
 unsigned long long LFCounter::get() {
-    unsigned int second = memoryTwo->load();
-    unsigned int first = memoryOne->load();
     while (true) {
-        first = memoryOne->load();
-        second = memoryTwo->load();
+        auto first = memoryOne->load();
+        auto second = memoryTwo->load();
+        if (first == 0) {
+            first = memoryTwo->fetch_add(1);
+            second = memoryOne->fetch_add(1);
+        }
         while(first != second && !memoryOne->compare_exchange_strong(first, first + 1));
         if (first == second) {
-            if (memoryTwo->compare_exchange_strong(second, second + 1)) {
-                if (memoryOne->compare_exchange_strong(second, 0)) {
-                    return convertInts(second, first);
-                }
+            if (memoryOne->compare_exchange_strong(first, 0)) {
+                return convertInts(second, first);
             }
         } else {
             return convertInts(second, first);

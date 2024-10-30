@@ -17,8 +17,8 @@ unsigned long long LFCounter::get() {
         auto first = memoryOne->load();
         auto second = memoryTwo->load();
         if (first == 0) {
-            first = memoryTwo->fetch_add(1);
             second = memoryOne->fetch_add(1);
+            first = memoryTwo->fetch_add(1);
         }
         while(first != second && !memoryOne->compare_exchange_strong(first, first + 1));
         if (first == second) {

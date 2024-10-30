@@ -14,19 +14,22 @@ unsigned long long convertInts(unsigned int first, unsigned int second) {
 
 unsigned long long LFCounter::get() {
     while (true) {
-        auto first = memoryOne->load();
         auto second = memoryTwo->load();
-        if (first == 0) {
-            second = memoryOne->compare_exchange_strong(second, second + 1);
-            first = memoryTwo->compare_exchange_strong(first, first + 1);
-        }
-        while(first != std::numeric_limits<uint32_t>::max() && first != 0 && !memoryOne->compare_exchange_strong(first, first + 1));
-        if (first == std::numeric_limits<uint32_t>::max()) {
+        auto first = memoryOne->load();
+        while(first != std::numeric_limits<uint32_t>::max() && !memoryOne->compare_exchange_strong(first, first + 1));
+        if (first == std::numeric_limits<uint32_t>::max() - 1) {
+            first++;
+            (*memoryTwo)++;
             if (memoryOne->compare_exchange_strong(first, 0)) {
                 return convertInts(second, first);
             }
-        } else if (first != 0) {
+        } else if (first == std::numeric_limits<uint32_t>::max()){
+            while(second != std::numeric_limits<uint32_t>::max() && !memoryTwo->compare_exchange_strong(second, second + 1));
             return convertInts(second, first);
         }
+        if (!memoryTwo->compare_exchange_strong(second, second)) {
+            continue;
+        }
+        return convertInts(second, first);
     }
 }

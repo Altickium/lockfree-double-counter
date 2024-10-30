@@ -20,12 +20,12 @@ unsigned long long LFCounter::get() {
             second = memoryOne->fetch_add(1);
             first = memoryTwo->fetch_add(1);
         }
-        while(first != second && !memoryOne->compare_exchange_strong(first, first + 1));
+        while(first != second && first != 0 && !memoryOne->compare_exchange_strong(first, first + 1));
         if (first == second) {
             if (memoryOne->compare_exchange_strong(first, 0)) {
                 return convertInts(second, first);
             }
-        } else {
+        } else if (first != 0) {
             return convertInts(second, first);
         }
     }

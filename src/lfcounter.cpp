@@ -20,8 +20,8 @@ unsigned long long LFCounter::get() {
             second = memoryOne->fetch_add(1);
             first = memoryTwo->fetch_add(1);
         }
-        while(first != second && first != 0 && !memoryOne->compare_exchange_strong(first, first + 1));
-        if (first == second) {
+        while(first != std::numeric_limits<uint32_t>::max() && first != 0 && !memoryOne->compare_exchange_strong(first, first + 1));
+        if (first == std::numeric_limits<uint32_t>::max()) {
             if (memoryOne->compare_exchange_strong(first, 0)) {
                 return convertInts(second, first);
             }
